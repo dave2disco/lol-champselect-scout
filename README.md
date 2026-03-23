@@ -44,8 +44,8 @@ python gui.py
 4. Filters participants by `activePlatform != null` and `cid` containing `lol-champ-select` — this ensures only the 5 players in your actual session are shown
 5. Builds an OP.GG multisearch URL for the selected region
 
-⚠️ IMPORTANT: Before scanning for player names, make sure that the champ select has fully loaded and that everyone has connected to the chat, otherwise the program will not show everyone's name.
-I suggest to use the tool during the ban phase as by then the League client should be fully operational.
+⚠️ **IMPORTANT**: Before scanning for player names, make sure that the champ select has fully loaded and that everyone has connected to the chat, otherwise the program will not show everyone's name.
+<br>I suggest to use the tool during the ban phase as by then the League client should be fully operational.</br>
 
 ---
 
