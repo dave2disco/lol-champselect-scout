@@ -5,8 +5,9 @@ Reveal the Riot IDs of all 5 players in your League of Legends champ select lobb
 ## Features
 
 - Reads player names directly from the local League client (LCU API) — no login required
+- **Auto-detects your region** from the League client — no manual selection needed
+- Supports all OP.GG regions: EUW, EUNE, NA, KR, BR, LAN, LAS, OCE, TR, RU, JP, SG, TW, VN, PH, TH, ME
 - Filters out friends who are online or in other games, showing only your 5 teammates
-- Region selector: **EUW**, **EUNE**, **NA**
 - One-click OP.GG multisearch link
 - Copy link to clipboard
 
@@ -28,8 +29,8 @@ No installation needed — just double-click and run.
 ## Run from source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/champselect-scout.git
-cd champselect-scout
+git clone https://github.com/dave2disco/lol-champselect-scout.git
+cd lol-champselect-scout
 pip install -r requirements.txt
 python gui.py
 ```
@@ -39,10 +40,11 @@ python gui.py
 ## How it works
 
 1. Detects the running `LeagueClientUx.exe` process and reads its auth tokens
-2. Calls `/lol-gameflow/v1/gameflow-phase` to confirm you are in champ select
-3. Calls `/chat/v5/participants` on the Riot client port
-4. Filters participants by `activePlatform != null` and `cid` containing `lol-champ-select` — this ensures only the 5 players in your actual session are shown
-5. Builds an OP.GG multisearch URL for the selected region
+2. Calls `/riotclient/region-locale` to auto-detect your server region
+3. Calls `/lol-gameflow/v1/gameflow-phase` to confirm you are in champ select
+4. Calls `/chat/v5/participants` on the Riot client port
+5. Filters participants by `activePlatform != null` and `cid` containing `lol-champ-select` — this ensures only the 5 players in your actual session are shown
+6. Builds an OP.GG multisearch URL for your auto-detected region
 
 ⚠️ **IMPORTANT**: Before scanning for player names, make sure that the champ select has fully loaded and that everyone has connected to the chat, otherwise the program will not show everyone's name.
 <br>I suggest to use the tool during the ban phase as by then the League client should be fully operational.</br>
@@ -53,7 +55,7 @@ python gui.py
 
 ```
 champselect-scout/
-├── core.py          # LCU logic, API calls, filtering
+├── core.py          # LCU logic, API calls, region detection, filtering
 ├── gui.py           # Tkinter UI (imports from core.py)
 ├── requirements.txt
 └── .github/

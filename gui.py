@@ -3,7 +3,6 @@ import webbrowser
 import tkinter as tk
 
 from core import (
-    REGIONS, REGION_NAMES,
     find_league_process, extract_tokens, make_headers,
     get_champ_select_players,
 )
@@ -28,7 +27,7 @@ FONT_SUB    = ("Georgia", 10, "italic")
 FONT_NAME   = ("Consolas", 13, "bold")
 FONT_BTN    = ("Georgia", 11, "bold")
 FONT_SMALL  = ("Consolas", 9)
-FONT_REGION = ("Consolas", 10, "bold")
+FONT_BADGE  = ("Consolas", 10, "bold")
 
 
 # ──────────────────────────────────────────────
@@ -41,11 +40,12 @@ class ChampSelectApp(tk.Tk):
         self.title("ChampSelect Scout")
         self.configure(bg=BG)
         self.resizable(False, False)
-        self.geometry("480x680")
-        self._opgg_url   = None
-        self._region_var = tk.StringVar(value="EUW")
+        self.geometry("480x640")
+        self._opgg_url = None
         self._build_ui()
         self._center_window()
+        # Detect region immediately at startup (non-blocking)
+        threading.Thread(target=self._detect_region_on_startup, daemon=True).start()
 
     # ── Layout ──────────────────────────────────
     def _build_ui(self):
@@ -59,38 +59,30 @@ class ChampSelectApp(tk.Tk):
 
         tk.Frame(self, bg=ACCENT2, height=1).pack(fill="x", side="top", padx=28)
 
-        # ── Region selector ──
+        # ── Region badge ──
         region_frame = tk.Frame(self, bg=BG, pady=12)
         region_frame.pack(fill="x", side="top", padx=28)
-        tk.Label(region_frame, text="REGION",
+        tk.Label(region_frame, text="REGION (AUTO-DETECTED)",
                  font=("Consolas", 8, "bold"), bg=BG, fg=ACCENT2).pack(anchor="w")
-        grid = tk.Frame(region_frame, bg=BG)
-        grid.pack(fill="x", pady=(4, 0))
-
-        self._region_buttons = {}
-        for i, name in enumerate(REGION_NAMES):
-            btn = tk.Button(
-                grid, text=name, font=FONT_REGION,
-                bg=ACCENT3, fg=ACCENT2,
-                relief="flat", cursor="hand2",
-                padx=4, pady=5, width=4,
-                command=lambda n=name: self._select_region(n)
-            )
-            btn.grid(row=0, column=i, padx=2, pady=2, sticky="ew")
-            grid.columnconfigure(i, weight=1)
-            self._region_buttons[name] = btn
-        self._select_region("EUW")
+        self.region_badge = tk.Label(
+            region_frame, text="—",
+            font=FONT_BADGE,
+            bg=ACCENT3, fg=ACCENT2,
+            padx=10, pady=5,
+            relief="flat",
+        )
+        self.region_badge.pack(anchor="w", pady=(4, 0))
 
         tk.Frame(self, bg=ACCENT2, height=1).pack(fill="x", side="top", padx=28)
 
-        # ── Footer (packed before middle content so it always stays at the bottom) ──
+        # ── Footer ──
         footer_frame = tk.Frame(self, bg=BG)
         footer_frame.pack(fill="x", side="bottom")
         tk.Frame(footer_frame, bg=ACCENT2, height=1).pack(fill="x", padx=28)
         tk.Label(footer_frame, text="•  ChampSelect Scout  •",
                  font=("Consolas", 8), bg=BG, fg=ACCENT2).pack(pady=8)
 
-        # ── Bottom action buttons (packed before player panel) ──
+        # ── Bottom action buttons ──
         self.copy_btn = tk.Button(
             self, text="COPY LINK",
             font=("Georgia", 9, "bold"), bg=BG, fg=TEXT_DIM,
@@ -144,12 +136,20 @@ class ChampSelectApp(tk.Tk):
         self.player_frame.pack(fill="both", expand=True, padx=10, pady=6)
         self._show_placeholder()
 
-    # ── Region selector ─────────────────────────
-    def _select_region(self, name):
-        for btn in self._region_buttons.values():
-            btn.config(bg=ACCENT3, fg=ACCENT2)
-        self._region_buttons[name].config(bg=ACCENT2, fg=ACCENT)
-        self._region_var.set(name)
+    # ── Startup region detection ─────────────────
+    def _detect_region_on_startup(self):
+        from core import detect_region
+        cmdline = find_league_process()
+        if not cmdline:
+            return
+        tokens = extract_tokens(cmdline)
+        if not tokens:
+            return
+        _, _, r_port, r_tok = tokens
+        slug = detect_region(r_port, make_headers(r_tok))
+        if slug:
+            self.after(0, self.region_badge.config,
+                       {"text": slug.upper(), "bg": ACCENT2, "fg": ACCENT})
 
     # ── Helpers ─────────────────────────────────
     def _center_window(self):
@@ -205,16 +205,14 @@ class ChampSelectApp(tk.Tk):
             self.after(0, self._update_error, "Failed to read client tokens.")
             return
         c_port, c_tok, r_port, r_tok = tokens
-        region_slug = REGIONS[self._region_var.get()]
-        names, opgg, err = get_champ_select_players(
+        names, opgg, region_slug, err = get_champ_select_players(
             c_port, make_headers(c_tok),
             r_port, make_headers(r_tok),
-            region_slug
         )
         if err:
             self.after(0, self._update_error, err)
         else:
-            self.after(0, self._update_success, names, opgg)
+            self.after(0, self._update_success, names, opgg, region_slug)
 
     def _update_error(self, msg):
         self._show_placeholder()
@@ -222,11 +220,11 @@ class ChampSelectApp(tk.Tk):
         self.status_lbl.config(fg=RED)
         self.scan_btn.config(state="normal", text="SCAN CHAMP SELECT")
 
-    def _update_success(self, names, opgg):
+    def _update_success(self, names, opgg, region_slug):
         self._opgg_url = opgg
         self._show_players(names)
-        region = self._region_var.get()
-        self.status_var.set(f"✓  {len(names)} players found  •  {region}")
+        self.region_badge.config(text=region_slug.upper(), bg=ACCENT2, fg=ACCENT)
+        self.status_var.set(f"✓  {len(names)} players found")
         self.status_lbl.config(fg=GREEN)
         self.scan_btn.config(state="normal", text="SCAN AGAIN")
         self.opgg_btn.config(state="normal", bg=ACCENT2, fg=ACCENT)
