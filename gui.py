@@ -62,7 +62,7 @@ class ChampSelectApp(tk.Tk):
         # ── Region badge ──
         region_frame = tk.Frame(self, bg=BG, pady=12)
         region_frame.pack(fill="x", side="top", padx=28)
-        tk.Label(region_frame, text="REGION",
+        tk.Label(region_frame, text="REGION (AUTO-DETECTED)",
                  font=("Consolas", 8, "bold"), bg=BG, fg=ACCENT2).pack(anchor="w")
         self.region_badge = tk.Label(
             region_frame, text="—",
