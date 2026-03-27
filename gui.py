@@ -40,7 +40,7 @@ class ChampSelectApp(tk.Tk):
         self.title("ChampSelect Scout")
         self.configure(bg=BG)
         self.resizable(False, False)
-        self.geometry("480x640")
+        self.minsize(480, 0)
         self._opgg_url = None
         self._build_ui()
         self._center_window()
@@ -62,7 +62,7 @@ class ChampSelectApp(tk.Tk):
         # ── Region badge ──
         region_frame = tk.Frame(self, bg=BG, pady=12)
         region_frame.pack(fill="x", side="top", padx=28)
-        tk.Label(region_frame, text="REGION (AUTO-DETECTED)",
+        tk.Label(region_frame, text="REGION",
                  font=("Consolas", 8, "bold"), bg=BG, fg=ACCENT2).pack(anchor="w")
         self.region_badge = tk.Label(
             region_frame, text="—",
@@ -74,30 +74,6 @@ class ChampSelectApp(tk.Tk):
         self.region_badge.pack(anchor="w", pady=(4, 0))
 
         tk.Frame(self, bg=ACCENT2, height=1).pack(fill="x", side="top", padx=28)
-
-        # ── Footer ──
-        footer_frame = tk.Frame(self, bg=BG)
-        footer_frame.pack(fill="x", side="bottom")
-        tk.Frame(footer_frame, bg=ACCENT2, height=1).pack(fill="x", padx=28)
-        tk.Label(footer_frame, text="•  ChampSelect Scout  •",
-                 font=("Consolas", 8), bg=BG, fg=ACCENT2).pack(pady=8)
-
-        # ── Bottom action buttons ──
-        self.copy_btn = tk.Button(
-            self, text="COPY LINK",
-            font=("Georgia", 9, "bold"), bg=BG, fg=TEXT_DIM,
-            relief="flat", cursor="hand2", padx=16, pady=6,
-            state="disabled", command=self._copy_link
-        )
-        self.copy_btn.pack(fill="x", side="bottom", padx=28, pady=(0, 16))
-
-        self.opgg_btn = tk.Button(
-            self, text="OPEN ON OP.GG",
-            font=FONT_BTN, bg=BG2, fg=TEXT_DIM,
-            relief="flat", cursor="hand2", padx=16, pady=10,
-            state="disabled", command=self._open_opgg
-        )
-        self.opgg_btn.pack(fill="x", side="bottom", padx=28, pady=(0, 6))
 
         # ── Scan button ──
         btn_frame = tk.Frame(self, bg=BG, pady=10)
@@ -125,9 +101,8 @@ class ChampSelectApp(tk.Tk):
                  font=("Georgia", 9, "bold"), bg=BG, fg=ACCENT2
                  ).pack(anchor="w", side="top", padx=30)
 
-        panel_outer = tk.Frame(self, bg=BORDER, padx=1, pady=1, height=200)
+        panel_outer = tk.Frame(self, bg=BORDER, padx=1, pady=1)
         panel_outer.pack(fill="x", side="top", padx=28, pady=(4, 12))
-        panel_outer.pack_propagate(False)
 
         panel = tk.Frame(panel_outer, bg=BG2)
         panel.pack(fill="both", expand=True)
@@ -135,6 +110,30 @@ class ChampSelectApp(tk.Tk):
         self.player_frame = tk.Frame(panel, bg=BG2, pady=8)
         self.player_frame.pack(fill="both", expand=True, padx=10, pady=6)
         self._show_placeholder()
+
+        # ── Action buttons ──
+        self.opgg_btn = tk.Button(
+            self, text="OPEN ON OP.GG",
+            font=FONT_BTN, bg=BG2, fg=TEXT_DIM,
+            relief="flat", cursor="hand2", padx=16, pady=10,
+            state="disabled", command=self._open_opgg
+        )
+        self.opgg_btn.pack(fill="x", side="top", padx=28, pady=(0, 6))
+
+        self.copy_btn = tk.Button(
+            self, text="COPY LINK",
+            font=("Georgia", 9, "bold"), bg=BG, fg=TEXT_DIM,
+            relief="flat", cursor="hand2", padx=16, pady=6,
+            state="disabled", command=self._copy_link
+        )
+        self.copy_btn.pack(fill="x", side="top", padx=28, pady=(0, 8))
+
+        # ── Footer ──
+        tk.Frame(self, bg=ACCENT2, height=1).pack(fill="x", side="top", padx=28)
+        footer_frame = tk.Frame(self, bg=BG)
+        footer_frame.pack(fill="x", side="top")
+        tk.Label(footer_frame, text="•  ChampSelect Scout  •",
+                 font=("Consolas", 8), bg=BG, fg=ACCENT2).pack(pady=8)
 
     # ── Startup region detection ─────────────────
     def _detect_region_on_startup(self):
